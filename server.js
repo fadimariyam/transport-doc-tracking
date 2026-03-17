@@ -21,8 +21,9 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://transport-doc-front.vercel.app/",
+      "https://transport-doc-front.vercel.app",
     ],
+    methods: ["GET", "POST", "PUT", "DELETE","OPTIONS",],
     credentials: true,
   })
 );

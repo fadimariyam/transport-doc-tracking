@@ -70,10 +70,13 @@ const sendRequest = async (req, res) => {
 
 
     const approveLink =
-      `http://localhost:5000/api/scan/approve/${data.id}`;
+    //   `http://localhost:5000/api/scan/approve/${data.id}`;
+    `${process.env.BACKEND_URL}/api/scan/approve/${data.id}`;
+
 
     const denyLink =
-      `http://localhost:5000/api/scan/deny/${data.id}`;
+    //   `http://localhost:5000/api/scan/deny/${data.id}`;
+    `${process.env.BACKEND_URL}/api/scan/deny/${data.id}`;
 
 
     const html = `
