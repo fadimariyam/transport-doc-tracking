@@ -28,22 +28,20 @@ const app = express();
 //   })
 // );
 
-
-
-
+app.set("trust proxy", 1);
 
 app.use((req, res, next) => {
-  res.header(
+  res.setHeader(
     "Access-Control-Allow-Origin",
-    "https://transport-doc-front.vercel.app"
+    "*"
   );
 
-  res.header(
+  res.setHeader(
     "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    "Origin, Content-Type, Authorization"
   );
 
-  res.header(
+  res.setHeader(
     "Access-Control-Allow-Methods",
     "GET, POST, PUT, DELETE, OPTIONS"
   );
