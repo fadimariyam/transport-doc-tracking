@@ -119,13 +119,6 @@ const sendRequest = async (req, res) => {
 
     `;
 
-
-    // await sendMail(
-    //   process.env.ADMIN_MAIL,
-    //   "Access Request",
-    //   html
-    // );
-
     const adminMail =
   process.env.ADMIN_MAIL ||
   process.env.MAIL_USER;
@@ -167,6 +160,7 @@ const checkAccess = async (req, res) => {
       FROM access_requests
       WHERE qr_text=$1
       AND status='approved'
+      AND created_at > NOW() - interval '10 minutes'
       ORDER BY id DESC
       LIMIT 1
       `,
