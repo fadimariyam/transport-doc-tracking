@@ -306,6 +306,10 @@ const getPublicDocs = async (req, res) => {
 
 };
 
+/*=====DEBUG EMAIL LINKS===== */
+console.log("BACKEND_URL =", process.env.BACKEND_URL);
+console.log("APPROVE LINK =", approveLink);
+console.log("DENY LINK =", denyLink);
 
 module.exports = {
   sendRequest,
