@@ -120,11 +120,25 @@ const sendRequest = async (req, res) => {
     `;
 
 
-    await sendMail(
-      process.env.ADMIN_MAIL,
-      "Access Request",
-      html
-    );
+    // await sendMail(
+    //   process.env.ADMIN_MAIL,
+    //   "Access Request",
+    //   html
+    // );
+
+    const adminMail =
+  process.env.ADMIN_MAIL ||
+  process.env.MAIL_USER;
+
+console.log("ADMIN_MAIL =", process.env.ADMIN_MAIL);
+console.log("MAIL_USER =", process.env.MAIL_USER);
+console.log("FINAL MAIL =", adminMail);
+
+await sendMail(
+  adminMail,
+  "Access Request",
+  html
+);
 
 
     res.json(data);
