@@ -24,8 +24,8 @@ data.owner,
 data.category,
 
 // ✅ THIS IS IMPORTANT
-      `vehicle-${data.vehicle_id}`
-      
+   `${process.env.FRONTEND_URL}/scan/vehicle-${data.vehicle_id}`
+
 ]
   );
 
