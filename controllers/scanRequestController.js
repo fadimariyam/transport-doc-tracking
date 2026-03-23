@@ -313,36 +313,44 @@ const deny = async (req, res) => {
 //   }
 
 // };
+
+
 const getPublicDocs = async (req, res) => {
 
   try {
 
     const { text } = req.params;
 
-    let type =
+    console.log("QR TEXT =", text);
+
+    // extract id from vehicle-5 / equipment-3
+
+    const id =
+      text.replace(/[^0-9]/g, "");
+
+    const type =
       text.includes("equipment")
         ? "equipment"
         : "vehicle";
 
-    const code =
-      text.replace("vehicle-","")
-          .replace("equipment-","");
+
+    console.log("TYPE =", type);
+    console.log("ID =", id);
+
 
     const docs = await db.query(
-
       `
-      SELECT d.*
-      FROM documents d
-      JOIN vehicles v
-      ON d.item_id = v.id
-
-      WHERE d.item_type=$1
-      AND v.vehicle_id=$2
+      SELECT *
+      FROM documents
+      WHERE item_type=$1
+      AND item_id=$2
+      ORDER BY id DESC
       `,
-
-      [type, code]
-
+      [type, id]
     );
+
+
+    console.log("DOCS =", docs.rows);
 
     res.json(docs.rows);
 
@@ -350,7 +358,7 @@ const getPublicDocs = async (req, res) => {
 
     console.log(err);
 
-    res.json([]);
+    res.status(500).json(err.message);
 
   }
 
