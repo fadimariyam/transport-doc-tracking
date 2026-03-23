@@ -19,9 +19,6 @@ const registerVehicle = async (req, res) => {
   try {
 
     const { id } = req.body;
-
-    // const qrText =
-      // `http://192.168.0.126:5173/scan/vehicle-${id}`;
     
       const qrText =
   `${process.env.FRONTEND_URL}/scan/vehicle-${id}`;
@@ -58,9 +55,6 @@ const registerEquipment =
     try {
 
       const { id } = req.body;
-
-      // const qrText =
-        // `http://192.168.0.126/scan/equipment-${id}`;
 
         const qrText =
   `${process.env.FRONTEND_URL}/scan/equipment-${id}`;
