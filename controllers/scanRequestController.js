@@ -265,6 +265,54 @@ const deny = async (req, res) => {
 
 /* ================= PUBLIC DOCS ================= */
 
+// const getPublicDocs = async (req, res) => {
+
+//   try {
+
+//     const { text } = req.params;
+
+//     console.log("QR TEXT =", text);
+
+//     // extract id from vehicle-5 / equipment-3
+
+//     const id =
+//       text.replace(/[^0-9]/g, "");
+
+//     const type =
+//       text.includes("equipment")
+//         ? "equipment"
+//         : "vehicle";
+
+
+//     console.log("TYPE =", type);
+//     console.log("ID =", id);
+
+
+//     const docs = await db.query(
+//       `
+//       SELECT *
+//       FROM documents
+//       WHERE item_type=$1
+//       AND item_id=$2
+//       ORDER BY id DESC
+//       `,
+//       [type, id]
+//     );
+
+
+//     console.log("DOCS =", docs.rows);
+
+//     res.json(docs.rows);
+
+//   } catch (err) {
+
+//     console.log(err);
+
+//     res.status(500).json(err.message);
+
+//   }
+
+// };
 const getPublicDocs = async (req, res) => {
 
   try {
@@ -273,20 +321,24 @@ const getPublicDocs = async (req, res) => {
 
     console.log("QR TEXT =", text);
 
-    // extract id from vehicle-5 / equipment-3
+    // extract id safely
 
-    const id =
+    const idStr =
       text.replace(/[^0-9]/g, "");
+
+    if (!idStr) {
+      return res.json([]);
+    }
+
+    const id = Number(idStr);
 
     const type =
       text.includes("equipment")
         ? "equipment"
         : "vehicle";
 
-
     console.log("TYPE =", type);
     console.log("ID =", id);
-
 
     const docs = await db.query(
       `
@@ -298,7 +350,6 @@ const getPublicDocs = async (req, res) => {
       `,
       [type, id]
     );
-
 
     console.log("DOCS =", docs.rows);
 
@@ -313,6 +364,9 @@ const getPublicDocs = async (req, res) => {
   }
 
 };
+
+
+
 
 module.exports = {
   sendRequest,
