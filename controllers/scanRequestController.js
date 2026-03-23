@@ -319,39 +319,30 @@ const getPublicDocs = async (req, res) => {
 
     const { text } = req.params;
 
-    console.log("QR TEXT =", text);
-
-    // extract id safely
-
-    const idStr =
-      text.replace(/[^0-9]/g, "");
-
-    if (!idStr) {
-      return res.json([]);
-    }
-
-    const id = Number(idStr);
-
-    const type =
+    let type =
       text.includes("equipment")
         ? "equipment"
         : "vehicle";
 
-    console.log("TYPE =", type);
-    console.log("ID =", id);
+    const code =
+      text.replace("vehicle-","")
+          .replace("equipment-","");
 
     const docs = await db.query(
-      `
-      SELECT *
-      FROM documents
-      WHERE item_type=$1
-      AND item_id=$2
-      ORDER BY id DESC
-      `,
-      [type, id]
-    );
 
-    console.log("DOCS =", docs.rows);
+      `
+      SELECT d.*
+      FROM documents d
+      JOIN vehicles v
+      ON d.item_id = v.id
+
+      WHERE d.item_type=$1
+      AND v.vehicle_id=$2
+      `,
+
+      [type, code]
+
+    );
 
     res.json(docs.rows);
 
@@ -359,7 +350,7 @@ const getPublicDocs = async (req, res) => {
 
     console.log(err);
 
-    res.status(500).json(err.message);
+    res.json([]);
 
   }
 

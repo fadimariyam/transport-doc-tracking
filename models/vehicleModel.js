@@ -22,6 +22,10 @@ data.brand,
 data.plate,
 data.owner,
 data.category,
+
+// ✅ THIS IS IMPORTANT
+      `vehicle-${data.vehicle_id}`
+      
 ]
   );
 
