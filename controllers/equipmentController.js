@@ -37,11 +37,71 @@ const calcStatus = (warranty) => {
 
 /* ================= ADD ================= */
 
+// const addEquipment = async (req, res) => {
+
+//   try {
+
+//     const {
+//       name,
+//       type,
+//       serial,
+//       handled_by,
+//       warranty
+//     } = req.body;
+
+
+//     if (!name)
+//       return res
+//         .status(400)
+//         .json("Name required");
+
+//     if (!type)
+//       return res
+//         .status(400)
+//         .json("Type required");
+
+
+//     const equipment_id =
+//       await generateEquipmentId(type);
+
+
+//     const status =
+//       calcStatus(warranty);
+
+
+//     const equipment =
+//       await createEquipment({
+
+//         equipment_id,
+//         name,
+//         type,
+//         serial,
+//         handled_by,
+//         warranty,
+//         status
+
+//       });
+
+
+//     res.json(equipment);
+
+//   } catch (err) {
+
+//     console.log(err);
+
+//     res
+//       .status(500)
+//       .json(err.message);
+
+//   }
+
+// };
+
 const addEquipment = async (req, res) => {
 
   try {
 
-    const {
+    let {
       name,
       type,
       serial,
@@ -49,24 +109,41 @@ const addEquipment = async (req, res) => {
       warranty
     } = req.body;
 
+    // ✅ safety defaults
+
+    name = name || "";
+    type = type || "";
+    serial = serial || "";
+    handled_by = handled_by || "";
+
+    if (warranty === "" || warranty === undefined) {
+      warranty = null;
+    }
 
     if (!name)
-      return res
-        .status(400)
-        .json("Name required");
+      return res.status(400).json("Name required");
 
     if (!type)
-      return res
-        .status(400)
-        .json("Type required");
-
+      return res.status(400).json("Type required");
 
     const equipment_id =
       await generateEquipmentId(type);
 
 
-    const status =
-      calcStatus(warranty);
+    // ✅ status calc safe
+
+    let status = "Normal";
+
+    if (warranty) {
+
+      const diff =
+        (new Date(warranty) - Date.now()) /
+        (1000 * 60 * 60 * 24);
+
+      if (diff < 0) status = "Expired";
+      else if (diff < 30) status = "Soon";
+
+    }
 
 
     const equipment =
@@ -82,16 +159,13 @@ const addEquipment = async (req, res) => {
 
       });
 
-
     res.json(equipment);
 
   } catch (err) {
 
-    console.log(err);
+    console.log("ADD EQUIPMENT ERROR:", err);
 
-    res
-      .status(500)
-      .json(err.message);
+    res.status(500).json(err.message);
 
   }
 
