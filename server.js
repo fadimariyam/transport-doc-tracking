@@ -1,6 +1,6 @@
 require("dotenv").config();
 require("./services/expiryChecker");
-require("./utils/cron");
+// require("./utils/cron");
 const express = require("express");
 const cors = require("cors");
 
