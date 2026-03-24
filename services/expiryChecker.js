@@ -310,6 +310,13 @@ for (let v of vehicles.rows) {
 
 }
 
+/*================BEFORE SENT MAIL=========== */
+await db.query(
+  "UPDATE documents SET alert_sent=true"
+);
+
+console.log("UPDATED");
+
 
 /* ================= SEND ================= */
 
@@ -357,3 +364,12 @@ console.log("No alerts");
   }
 
 });
+
+/*==========DB TEST========= */
+console.log("DB TEST");
+
+const t = await db.query(
+  "SELECT COUNT(*) FROM documents"
+);
+
+console.log("DOC COUNT =", t.rows);
