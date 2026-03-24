@@ -201,12 +201,19 @@ const { sendMail } =
   require("./emailService");
 
 
+if (global.expiryCronStarted) {
+  console.log("Cron already started");
+  return;
+}
+
+global.expiryCronStarted = true;
+
+console.log("Starting expiry cron...");
+
+
 let running = false;
 
 
-/*
-Runs every day at 9:00 AM server time
-*/
 cron.schedule("0 9 * * *", async () => {
 
   if (running) return;
@@ -220,8 +227,7 @@ cron.schedule("0 9 * * *", async () => {
     let rows = [];
 
 
-
-/* ================= DOCUMENTS ================= */
+/* DOCUMENTS */
 
 const docs = await db.query(`
 SELECT d.*, v.name as vehicle_name
@@ -236,10 +242,9 @@ for (let d of docs.rows) {
 
   if (!d.expiry) continue;
 
-  const diff = Math.floor(
+  const diff =
     (new Date(d.expiry) - new Date()) /
-    (1000*60*60*24)
-  );
+    (1000*60*60*24);
 
   if (diff < 0 || diff <= 30) {
 
@@ -262,8 +267,7 @@ for (let d of docs.rows) {
 }
 
 
-
-/* ================= EQUIPMENT ================= */
+/* EQUIPMENT */
 
 const eq = await db.query(`
 SELECT *
@@ -275,10 +279,9 @@ for (let e of eq.rows) {
 
   if (!e.warranty) continue;
 
-  const diff = Math.floor(
+  const diff =
     (new Date(e.warranty) - new Date()) /
-    (1000*60*60*24)
-  );
+    (1000*60*60*24);
 
   if (diff < 0 || diff <= 30) {
 
@@ -301,8 +304,7 @@ for (let e of eq.rows) {
 }
 
 
-
-/* ================= OIL ================= */
+/* OIL */
 
 const vehicles = await db.query(`
 SELECT *
@@ -338,8 +340,7 @@ for (let v of vehicles.rows) {
 }
 
 
-
-/* ================= SEND ================= */
+/* SEND */
 
 if (rows.length > 0) {
 
@@ -347,7 +348,7 @@ const html = `
 
 <h2>Transport DTS Alerts</h2>
 
-<table border="1" cellpadding="6" cellspacing="0">
+<table border="1">
 
 <tr>
 <th>Name</th>
@@ -369,10 +370,6 @@ await sendMail(
 );
 
 console.log("Mail sent");
-
-} else {
-
-console.log("No alerts");
 
 }
 
