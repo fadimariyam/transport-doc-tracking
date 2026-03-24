@@ -252,15 +252,14 @@
 
 // };
 
+const db = require("../config/db");
+
 const {
   createEquipment,
   getEquipments,
   countEquipments,
   getEquipmentById,
-  updateEquipment
-} = require("../models/equipmentModel");
-
-const {
+  updateEquipment,
   deleteEquipment
 } = require("../models/equipmentModel");
 
@@ -289,6 +288,7 @@ const calcStatus = (warranty) => {
 };
 
 
+
 /* ================= ADD ================= */
 
 const addEquipment = async (req, res) => {
@@ -302,8 +302,6 @@ const addEquipment = async (req, res) => {
       handled_by,
       warranty
     } = req.body;
-
-    // ✅ safety defaults
 
     name = name || "";
     type = type || "";
@@ -320,11 +318,10 @@ const addEquipment = async (req, res) => {
     if (!type)
       return res.status(400).json("Type required");
 
+
     const equipment_id =
       await generateEquipmentId(type);
 
-
-    // ✅ status calc safe
 
     let status = "Normal";
 
@@ -353,6 +350,16 @@ const addEquipment = async (req, res) => {
 
       });
 
+
+    // reset alert for new equipment
+    if (warranty) {
+      await db.query(
+        "UPDATE equipments SET alert_sent=false WHERE id=$1",
+        [equipment.id]
+      );
+    }
+
+
     res.json(equipment);
 
   } catch (err) {
@@ -366,67 +373,65 @@ const addEquipment = async (req, res) => {
 };
 
 
+
 /* ================= LIST ================= */
 
-const listEquipments =
-  async (req, res) => {
+const listEquipments = async (req, res) => {
 
-    const page =
-      parseInt(req.query.page) || 1;
+  const page =
+    parseInt(req.query.page) || 1;
 
-    const limit =
-      parseInt(req.query.limit) || 5;
+  const limit =
+    parseInt(req.query.limit) || 5;
 
-    const search =
-      req.query.search || "";
+  const search =
+    req.query.search || "";
 
-    const rows =
-      await getEquipments(
-        page,
-        limit,
-        search
-      );
+  const rows =
+    await getEquipments(
+      page,
+      limit,
+      search
+    );
 
-    /* ===== recalc status ===== */
 
-    rows.forEach(e => {
+  rows.forEach(e => {
 
-      if (!e.warranty) return;
+    if (!e.warranty) return;
 
-      const diff =
-        (new Date(e.warranty) - Date.now()) /
-        (1000 * 60 * 60 * 24);
+    const diff =
+      (new Date(e.warranty) - Date.now()) /
+      (1000 * 60 * 60 * 24);
 
-      if (diff < 0)
-        e.status = "Expired";
-      else if (diff < 30)
-        e.status = "Soon";
-      else
-        e.status = "Normal";
+    if (diff < 0)
+      e.status = "Expired";
+    else if (diff < 30)
+      e.status = "Soon";
+    else
+      e.status = "Normal";
 
-    });
+  });
 
-    const total =
-      await countEquipments(search);
 
-    res.json({
-      rows,
-      total,
-    });
+  const total =
+    await countEquipments(search);
+
+  res.json({
+    rows,
+    total,
+  });
 
 };
 
+
+
 /* ================= GET ONE ================= */
 
-const getOneEquipment = async (
-  req,
-  res
-) => {
+const getOneEquipment = async (req, res) => {
 
   try {
 
-    const { id } =
-      req.params;
+    const { id } = req.params;
 
     const equipment =
       await getEquipmentById(id);
@@ -435,13 +440,12 @@ const getOneEquipment = async (
 
   } catch (err) {
 
-    res
-      .status(500)
-      .json(err.message);
+    res.status(500).json(err.message);
 
   }
 
 };
+
 
 
 /* ================= EDIT ================= */
@@ -450,9 +454,6 @@ const editEquipment = async (req, res) => {
 
   try {
 
-    console.log("EDIT BODY =", req.body);
-    console.log("EDIT ID =", req.params.id);
-
     const { id } = req.params;
 
     const data =
@@ -460,6 +461,18 @@ const editEquipment = async (req, res) => {
         id,
         req.body
       );
+
+
+    // reset alert ONLY if warranty changed
+    if (req.body.warranty) {
+
+      await db.query(
+        "UPDATE equipments SET alert_sent=false WHERE id=$1",
+        [id]
+      );
+
+    }
+
 
     res.json(data);
 
@@ -474,26 +487,27 @@ const editEquipment = async (req, res) => {
 };
 
 
-const removeEquipment =
-  async (req, res) => {
 
-    try {
+/* ================= DELETE ================= */
 
-      await deleteEquipment(
-        req.params.id
-      );
+const removeEquipment = async (req, res) => {
 
-      res.json("deleted");
+  try {
 
-    } catch (err) {
+    const id = req.params.id;
 
-      res.status(500).json(
-        err.message
-      );
+    await deleteEquipment(id);
 
-    }
+    res.json("deleted");
+
+  } catch (err) {
+
+    res.status(500).json(err.message);
+
+  }
 
 };
+
 
 
 module.exports = {

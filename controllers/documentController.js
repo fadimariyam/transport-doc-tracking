@@ -166,11 +166,12 @@ const uploadDoc = async (req, res) => {
     );
 
     // ✅ RESET ALERT WHEN UPDATED / NEW
+    if(expiry){  
     await db.query(
       "UPDATE documents SET alert_sent=false WHERE id=$1",
       [doc.id]
     );
-
+  }
     res.json(doc);
 
   } catch (err) {

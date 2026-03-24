@@ -359,11 +359,20 @@ const editVehicle = async (req, res) => {
 
 
     // ✅ reset oil alert on update
-    await db.query(
-      "UPDATE vehicles SET oil_alert_sent=false WHERE id=$1",
-      [id]
-    );
-
+    // await db.query(
+    //   "UPDATE vehicles SET oil_alert_sent=false WHERE id=$1",
+    //   [id]
+    // );
+    if (
+  req.body.current_km ||
+  req.body.last_oil ||
+  req.body.interval
+) {
+  await db.query(
+    "UPDATE vehicles SET oil_alert_sent=false WHERE id=$1",
+    [id]
+  );
+}
 
     res.json(data);
 
