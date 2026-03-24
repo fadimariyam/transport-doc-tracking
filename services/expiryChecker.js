@@ -7,7 +7,6 @@
 // } = require("./emailService");
 
 
-
 // cron.schedule("0 9 * * *", async () => {
 
 //   try {
@@ -36,26 +35,27 @@
 //       const today = new Date();
 //       const exp = new Date(d.expiry);
 
-//       const diff =
+//       const diff = Math.floor(
 //         (exp - today) /
-//         (1000 * 60 * 60 * 24);
+//         (1000 * 60 * 60 * 24)
+//       );
 
 
 //       if (diff < 0) {
 
 //         messages.push(
-//           `Vehicle: ${d.vehicle_name} <br>
-// Document: ${d.name} <br>
+//           `Vehicle: ${d.vehicle_name}<br>
+// Document: ${d.name}<br>
 // Status: EXPIRED`
 //         );
 
 //       }
 
-//       else if (diff < 30) {
+//       else if (diff <= 30) {
 
 //         messages.push(
-//           `Vehicle: ${d.vehicle_name} <br>
-// Document: ${d.name} <br>
+//           `Vehicle: ${d.vehicle_name}<br>
+// Document: ${d.name}<br>
 // Status: SOON`
 //         );
 
@@ -80,19 +80,18 @@
 //       if (v.current_km > v.next_oil) {
 
 //         messages.push(
-//           `Vehicle: ${v.name} <br>
+//           `Vehicle: ${v.name}<br>
 // Oil: EXPIRED`
 //         );
 
 //       }
 
 //       else if (
-//         v.current_km >
-//         v.next_oil - 500
+//         v.current_km >= v.next_oil - 500
 //       ) {
 
 //         messages.push(
-//           `Vehicle: ${v.name} <br>
+//           `Vehicle: ${v.name}<br>
 // Oil: SOON`
 //         );
 
@@ -117,24 +116,25 @@
 //       const today = new Date();
 //       const exp = new Date(e.warranty);
 
-//       const diff =
+//       const diff = Math.floor(
 //         (exp - today) /
-//         (1000 * 60 * 60 * 24);
+//         (1000 * 60 * 60 * 24)
+//       );
 
 
 //       if (diff < 0) {
 
 //         messages.push(
-//           `Equipment: ${e.name} <br>
+//           `Equipment: ${e.name}<br>
 // Warranty: EXPIRED`
 //         );
 
 //       }
 
-//       else if (diff < 30) {
+//       else if (diff <= 30) {
 
 //         messages.push(
-//           `Equipment: ${e.name} <br>
+//           `Equipment: ${e.name}<br>
 // Warranty: SOON`
 //         );
 
@@ -144,12 +144,12 @@
 
 
 
-// /* ================= SEND ONE MAIL ================= */
+// /* ================= SEND MAIL ================= */
 
 //     if (messages.length > 0) {
 
 //       const text =
-//         "Transport DTS Alerts :<br><br>" +
+//         "<h3>Transport DTS Alerts</h3><br>" +
 //         messages.join("<br><br>");
 
 
@@ -158,30 +158,35 @@
 //         process.env.ADMIN_MAIL,
 
 //         "Expiry Alerts",
-//          text
+
+//         text
 
 //       );
 
 //       console.log("Mail sent");
+
+//     } else {
+
+//       console.log("No expiry alerts");
 
 //     }
 
 
 //   } catch (err) {
 
-//     console.log(err);
+//     console.log("Expiry checker error:", err);
 
 //   }
 
 // });
 
+
 const cron = require("node-cron");
 
 const db = require("../config/db");
 
-const {
-  sendMail,
-} = require("./emailService");
+const { sendMail } =
+  require("./emailService");
 
 
 cron.schedule("0 9 * * *", async () => {
@@ -190,168 +195,164 @@ cron.schedule("0 9 * * *", async () => {
 
     console.log("Checking expiry...");
 
-    let messages = [];
-
+    let rows = [];
 
 
 /* ================= DOCUMENTS ================= */
 
-    const docs = await db.query(`
-      SELECT d.*, v.name as vehicle_name
-      FROM documents d
-      LEFT JOIN vehicles v
-      ON d.item_id = v.id
-      WHERE d.item_type='vehicle'
-    `);
+const docs = await db.query(`
+SELECT d.*, v.name as vehicle_name
+FROM documents d
+LEFT JOIN vehicles v
+ON d.item_id = v.id
+WHERE d.item_type='vehicle'
+AND alert_sent=false
+`);
 
+for (let d of docs.rows) {
 
-    for (let d of docs.rows) {
+  if (!d.expiry) continue;
 
-      if (!d.expiry) continue;
+  const diff = Math.floor(
+    (new Date(d.expiry) - new Date()) /
+    (1000*60*60*24)
+  );
 
-      const today = new Date();
-      const exp = new Date(d.expiry);
+  if (diff < 0 || diff <= 30) {
 
-      const diff = Math.floor(
-        (exp - today) /
-        (1000 * 60 * 60 * 24)
-      );
+    rows.push(`
+<tr>
+<td>${d.vehicle_name}</td>
+<td>${d.name}</td>
+<td>${diff < 0 ? "EXPIRED" : "SOON"}</td>
+<td>${d.expiry.toISOString().slice(0,10)}</td>
+</tr>
+`);
 
+    await db.query(
+      "UPDATE documents SET alert_sent=true WHERE id=$1",
+      [d.id]
+    );
 
-      if (diff < 0) {
+  }
 
-        messages.push(
-          `Vehicle: ${d.vehicle_name}<br>
-Document: ${d.name}<br>
-Status: EXPIRED`
-        );
-
-      }
-
-      else if (diff <= 30) {
-
-        messages.push(
-          `Vehicle: ${d.vehicle_name}<br>
-Document: ${d.name}<br>
-Status: SOON`
-        );
-
-      }
-
-    }
-
-
-
-/* ================= OIL ================= */
-
-    const vehicles = await db.query(`
-      SELECT *
-      FROM vehicles
-    `);
-
-
-    for (let v of vehicles.rows) {
-
-      if (!v.next_oil) continue;
-
-      if (v.current_km > v.next_oil) {
-
-        messages.push(
-          `Vehicle: ${v.name}<br>
-Oil: EXPIRED`
-        );
-
-      }
-
-      else if (
-        v.current_km >= v.next_oil - 500
-      ) {
-
-        messages.push(
-          `Vehicle: ${v.name}<br>
-Oil: SOON`
-        );
-
-      }
-
-    }
-
+}
 
 
 /* ================= EQUIPMENT ================= */
 
-    const eq = await db.query(`
-      SELECT *
-      FROM equipments
-    `);
+const eq = await db.query(`
+SELECT *
+FROM equipments
+WHERE alert_sent=false
+`);
+
+for (let e of eq.rows) {
+
+  if (!e.warranty) continue;
+
+  const diff = Math.floor(
+    (new Date(e.warranty) - new Date()) /
+    (1000*60*60*24)
+  );
+
+  if (diff < 0 || diff <= 30) {
+
+    rows.push(`
+<tr>
+<td>${e.name}</td>
+<td>Warranty</td>
+<td>${diff < 0 ? "EXPIRED" : "SOON"}</td>
+<td>${e.warranty.toISOString().slice(0,10)}</td>
+</tr>
+`);
+
+    await db.query(
+      "UPDATE equipments SET alert_sent=true WHERE id=$1",
+      [e.id]
+    );
+
+  }
+
+}
 
 
-    for (let e of eq.rows) {
+/* ================= OIL ================= */
 
-      if (!e.warranty) continue;
+const vehicles = await db.query(`
+SELECT *
+FROM vehicles
+WHERE oil_alert_sent=false
+`);
 
-      const today = new Date();
-      const exp = new Date(e.warranty);
+for (let v of vehicles.rows) {
 
-      const diff = Math.floor(
-        (exp - today) /
-        (1000 * 60 * 60 * 24)
-      );
+  if (!v.next_oil) continue;
 
+  if (v.current_km > v.next_oil ||
+      v.current_km >= v.next_oil - 500) {
 
-      if (diff < 0) {
+    rows.push(`
+<tr>
+<td>${v.name}</td>
+<td>Oil</td>
+<td>${v.current_km > v.next_oil ? "EXPIRED" : "SOON"}</td>
+<td>KM ${v.next_oil}</td>
+</tr>
+`);
 
-        messages.push(
-          `Equipment: ${e.name}<br>
-Warranty: EXPIRED`
-        );
+    await db.query(
+      "UPDATE vehicles SET oil_alert_sent=true WHERE id=$1",
+      [v.id]
+    );
 
-      }
+  }
 
-      else if (diff <= 30) {
-
-        messages.push(
-          `Equipment: ${e.name}<br>
-Warranty: SOON`
-        );
-
-      }
-
-    }
-
-
-
-/* ================= SEND MAIL ================= */
-
-    if (messages.length > 0) {
-
-      const text =
-        "<h3>Transport DTS Alerts</h3><br>" +
-        messages.join("<br><br>");
+}
 
 
-      await sendMail(
+/* ================= SEND ================= */
 
-        process.env.ADMIN_MAIL,
+if (rows.length > 0) {
 
-        "Expiry Alerts",
+const html = `
 
-        text
+<h2>Transport DTS Alerts</h2>
 
-      );
+<table border="1" cellpadding="5" cellspacing="0">
 
-      console.log("Mail sent");
+<tr>
+<th>Name</th>
+<th>Item</th>
+<th>Status</th>
+<th>Expiry</th>
+</tr>
 
-    } else {
+${rows.join("")}
 
-      console.log("No expiry alerts");
+</table>
 
-    }
+`;
 
+await sendMail(
+  process.env.ADMIN_MAIL,
+  "Expiry Alerts",
+  html
+);
+
+console.log("Mail sent");
+
+}
+
+else {
+
+console.log("No alerts");
+
+}
 
   } catch (err) {
 
-    console.log("Expiry checker error:", err);
+    console.log(err);
 
   }
 
