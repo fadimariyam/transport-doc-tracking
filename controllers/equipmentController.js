@@ -178,15 +178,43 @@ const getOneEquipment = async (
 
 /* ================= EDIT ================= */
 
-const editEquipment = async (
-  req,
-  res
-) => {
+// const editEquipment = async (
+//   req,
+//   res
+// ) => {
+
+//   try {
+
+//     const { id } =
+//       req.params;
+
+//     const data =
+//       await updateEquipment(
+//         id,
+//         req.body
+//       );
+
+//     res.json(data);
+
+//   } catch (err) {
+
+//     res
+//       .status(500)
+//       .json(err.message);
+
+//   }
+
+// };
+
+
+const editEquipment = async (req, res) => {
 
   try {
 
-    const { id } =
-      req.params;
+    console.log("EDIT BODY =", req.body);
+    console.log("EDIT ID =", req.params.id);
+
+    const { id } = req.params;
 
     const data =
       await updateEquipment(
@@ -198,9 +226,9 @@ const editEquipment = async (
 
   } catch (err) {
 
-    res
-      .status(500)
-      .json(err.message);
+    console.log("EDIT ERROR =", err);
+
+    res.status(500).json(err.message);
 
   }
 
